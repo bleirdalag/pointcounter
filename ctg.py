@@ -166,7 +166,7 @@ def add_points(p,q,a,pr):
     if q == "inf":
         return p
 
-    if p[0] == q[0] and p[1] == (-q[1] % pr):
+    if p == negate_point(q, pr):
         return "inf"
 
     # calculate slope (http://www.mat.uniroma2.it/~schoof/ctg.pdf pg 222)
@@ -194,8 +194,8 @@ def bsgs(p,a,b):
     """Return the number of points on the curve using the baby-step-giant-step
     algorithm.
 
-    >>> bsgs(5,1,1)
-    9
+    >>> bsgs(5,1,1) in [9, -1]
+    True
     """
     
     P = get_random_point(p,a,b)
@@ -231,7 +231,7 @@ def bsgs(p,a,b):
     # giant steps: compute R, R+/-Q, R+/-2Q,..., R+/-tQ to find i,j such that R + iQ = jP
     # we are guaranteed this happens by Theorem 2.1 in Schoof.
     
-    t = int(round((2 * p**(1/2)) / (2*s + 1))) # the # of "giant steps" to take - approx p^(1/4)
+    t = int(round((2 * p**(1/2)) / (2*s + 1))) # num "giant steps" to take,approx p^(1/4)
     #assert(t*(2*s+1) + s >= 2 * int(p**(1/2)))
     
     next_Q_multiple = 'inf'
@@ -244,11 +244,10 @@ def bsgs(p,a,b):
             m = p + 1 + (2*s+1)*i - j # R + iQ - jP = mP = 0
             ms.add(m)
 
-        iQ = negate_point(next_Q_multiple, p)
-        R_minus_iQ = add_points(R, iQ, a, p)
-        if R_minus_iQ in baby_steps: # then R + iQ = jP
+        R_minus_iQ = add_points(R, negate_point(iQ, p), a, p)
+        if R_minus_iQ in baby_steps: # then R - iQ = jP
             j = baby_steps[R_minus_iQ]
-            m = p + 1 + (2*s+1)*(-i) - j # R + iQ - jP = mP = 0
+            m = p + 1 + (2*s+1)*(-i) - j # R - iQ - jP = (p+1)P - i(2s+1)P - jP = mP = 0
             ms.add(m)
 
         next_Q_multiple = add_points(next_Q_multiple, Q, a, p)
@@ -256,7 +255,6 @@ def bsgs(p,a,b):
     if len(ms) == 1:
         return ms.pop()
     else:
-        #print(ms)
         return -1 # failure
 
 
@@ -284,12 +282,12 @@ def count_points(p,a,b):
         if not is_square_mod_p(n,p):
             g = n
             break
-
+    
     while num_points == -1: #bsgs failed; try Mestre's algorithm
+        # alternate between trying BSGS on E and on E's quadratic twist
         twisted = not twisted
 
         if twisted:
-            #print("twisted!")
             # count #E'(F_p): E' is the quadratic twist with eqn Y^2 = X^3 + Ag^2X + Bg^3
             twist_points = bsgs(p,(a * pow(g,2,p)) % p,(b * pow(g,3,p)) % p) # try again
 
@@ -297,13 +295,12 @@ def count_points(p,a,b):
                 num_points = 2*(p+1) - twist_points # bc #E'(F_p) + #E(F_p) = 2(p+1)
 
         else:
-            #print("untwisted")
             num_points = bsgs(p,a,b)
 
     return num_points
 
 def scale_point(s, pt, a, p):
-    """ Return sP
+    """ Return sP -- not used in the above code but useful for testing / checking things
 
     >>> scale_point(1, (1,0), 1, 5)
     (1, 0)
@@ -325,19 +322,24 @@ def oracle():
     primes = [233, 277, 331, 379, 431, 467, 523, 587, 631, 677, 739, 797, 853, 907, 967, 1019, 1063, 1117, 1187, 1237, 1297, 1367, 1433, 1483, 1543, 1597, 1637, 1709, 1777, 1847, 1901, 1979, 2027, 2087, 2141, 2221, 2281, 2341, 2389, 2447, 2539, 2609, 2671, 2711, 2767, 2833, 2897, 2963, 3037, 3109, 3187, 3253, 3319, 3371, 3457, 3517, 3559, 3623, 3691, 3761, 3823, 3889, 3943, 4019, 4091, 4153, 4229, 4273, 4357, 4441, 4507, 4567, 4643, 4703, 4787, 4861, 4933, 4987, 5039, 5107, 5189, 5273, 5347, 5417, 5477, 5527, 5623, 5669, 5741, 5813, 5861, 5927, 6037, 6091, 6163, 6229, 6299, 6353, 6421, 6521, 6577, 6661, 6719, 6793, 6863, 6947, 6991, 7057, 7151, 7219, 7307, 7393, 7481, 7537, 7583, 7649, 7717, 7793, 7877, 7937, 8039, 8101, 8179, 8243, 8311, 8389, 8467, 8563, 8629, 8693, 8747, 8821, 8887, 8969, 9041, 9127, 9187, 9257, 9337, 9403, 9461, 9521, 9619, 9679, 9749, 9817, 9883, 9949, 10067, 10133, 10181, 10267, 10331, 10427, 10487, 10589, 10651, 10723, 10799, 10883, 10957, 11057, 11117, 11177, 11273, 11351, 11437, 11497, 11593, 11689, 11779, 11831, 11909, 11969, 12043, 12113, 12203, 12269, 12347, 12421, 12491, 12547, 12613, 12689, 12763, 12841, 12919, 12983, 13049, 13147, 13217, 13297, 13381, 13457, 13537, 13627, 13693, 13757, 13831, 13903, 13997, 14071, 14159, 14251, 14347, 14423, 14503, 14561, 14639, 14723, 14771, 14843, 14923, 15013, 15091, 15161, 15241, 15299, 15361, 15439, 15511, 15601]
 
     curves = 0
+    failed = False
+    
     for p in primes:
         for a in range(2,5):
             for b in range(2,5):
                 curves += 1
                 if naive_count(p,a,b) != count_points(p,a,b):
+                    failed = True
                     print("Algorithm failed for prime ", p, ", A = ", a, ", B = ", b)
                     print(curves, " curves checked so far")
 
     print("Checked ", curves, " elliptic curves")
+    if not failed:
+        print("Algorithm did not fail for any! :)")
 
 if __name__ == "__main__":
     import doctest
-    #doctest.testmod()
+    doctest.testmod()
 
     import sys
     if len(sys.argv) != 4:
