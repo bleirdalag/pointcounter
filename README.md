@@ -39,10 +39,8 @@ for primes of up to 16 digits. Since it is correct for every curve the
 oracle generates, I have reasonable faith that it has been correctly
 implemented.
 
-### Sources
-
-[1] http://www.mat.uniroma2.it/~schoof/ctg.pdf
-[2] https://math.mit.edu/classes/18.783/2017/LectureNotes8.pdf
-[3] https://en.wikipedia.org/wiki/Counting_points_on_elliptic_curves
-[4] http://www.math.vt.edu/people/brown/doc/sqrts.pdf
-[5] https://en.wikipedia.org/wiki/Tonelli%E2%80%93Shanks_algorithm
+[1]: http://www.mat.uniroma2.it/~schoof/ctg.pdf
+[2]: https://math.mit.edu/classes/18.783/2017/LectureNotes8.pdf
+[3]: https://en.wikipedia.org/wiki/Counting_points_on_elliptic_curves
+[4]: http://www.math.vt.edu/people/brown/doc/sqrts.pdf
+[5]: https://en.wikipedia.org/wiki/Tonelli%E2%80%93Shanks_algorithm
